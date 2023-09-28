@@ -44,3 +44,24 @@ lista = [1, 3, 5, 4]
 lista.sort()
 
 print(lista) # tulostuu [1, 3, 4, 5]
+
+# Pistelista
+
+pelaajaLista = []
+pisteet = -1
+while True:
+    pelaaja = str(input("Anna pelaaja: "))
+    if pelaaja == "lopeta":
+        break
+    uusiPisteet = int(input("Anna pisteet: "))
+    if pisteet == -1:
+        pisteet = uusiPisteet
+        pelaajaLista.append(pelaaja)
+    elif pisteet > uusiPisteet:
+        pelaajaLista = []
+        pelaajaLista.append(pelaaja)
+        pisteet = uusiPisteet
+    elif pisteet == uusiPisteet:
+        pelaajaLista.append(pelaaja)
+
+print(pelaajaLista,"-",pisteet)
