@@ -17,7 +17,7 @@ def main():
         naytto.fill((0, 0, 0))
         x = random.randint(1,400)
         y = random.randint(1,400)
-        piirraKuva("devastated.png", x, y)
+        piirraKuva("vihrea.png", x, y)
         pygame.display.flip()
 
 main()
