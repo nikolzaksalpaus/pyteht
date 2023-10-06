@@ -1,4 +1,5 @@
 import pygame
+import random
 
 naytto = pygame.display.set_mode((500, 500))
 pygame.display.set_caption("Piirtäminen")
@@ -8,7 +9,6 @@ def piirraKuva(kuvatiedosto, x, y):
     naytto.blit(kuvatiedosto, (x, y))
 
 def piirtaminen(naytto, hahmot, viholliset):
-    naytto.fill((0, 0, 0))
     for hahmo in hahmot:
         if hahmo[3] == True:
             kuva = pygame.image.load(hahmo[0]).convert()
@@ -29,14 +29,16 @@ def vihollinenTarkastus(hahmot, viholliset):
     for vihollinen in viholliset:
         for hahmo in hahmot:
             if vihollinen[1] - 100 < hahmo[1] < vihollinen[1] + 100 and vihollinen[2] - 100 < hahmo[2] < vihollinen[2] + 100:
-                del hahmot[0]
+                return True
+    return False
+                
 
 def vihollisenLiikkuminen(viholliset):
     for vihollinen in viholliset:
-        if vihollinen[1] > 390:
+        if vihollinen[1] >= 400:
             vihollinen[1] = 0
         else:
-            vihollinen[1] += 0.5
+            vihollinen[1] += 0.2
 
 def kontrolli(hahmot, tapahtuma, viholliset):
     paahahmo = hahmot[0]
@@ -60,16 +62,20 @@ def kontrolli(hahmot, tapahtuma, viholliset):
 
 def main():
     vihrea = ["vihrea.png", 100, 100, True]
-    punainen = ["punainen.png", 200, 200, False]
+    punainen = ["punainen.png", random.randint(0,400), random.randint(0,400), False]
+    punainen2 = ["punainen.png", random.randint(0,400), random.randint(0,400), False]
     hahmot = [vihrea]
-    viholliset = [punainen]
+    viholliset = [punainen, punainen2]
     while True:
         tapahtuma = pygame.event.poll()
         if tapahtuma.type == pygame.QUIT:
             break
         kontrolli(hahmot, tapahtuma, viholliset)
         piirtaminen(naytto, hahmot, viholliset)
-        vihollinenTarkastus(hahmot, viholliset)
+        if vihollinenTarkastus(hahmot, viholliset):
+            naytto.fill((100, 100, 100))
+        else:
+            naytto.fill((0, 0, 0))
         vihollisenLiikkuminen(viholliset)
 
 main()
