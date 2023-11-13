@@ -1,6 +1,11 @@
 import pygame
 import random
 
+liikkuOikealle = False
+liikkuVasemalle = False
+liikkuYlhaalle = False
+liikkuAlhaalle = False
+
 naytto = pygame.display.set_mode((500, 500))
 pygame.display.set_caption("Piirtäminen")
 
@@ -37,10 +42,12 @@ def vihollisenLiikkuminen(viholliset):
     for vihollinen in viholliset:
         if vihollinen[1] >= 400:
             vihollinen[1] = 0
+            vihollinen[2] = random.randint(0,400)
         else:
-            vihollinen[1] += 0.2
+            vihollinen[1] += 0.2  
 
 def kontrolli(hahmot, tapahtuma, viholliset):
+    global liikkuOikealle,liikkuVasemalle,liikkuAlhaalle,liikkuYlhaalle
     paahahmo = hahmot[0]
     if tapahtuma.type == pygame.KEYDOWN:
         if tapahtuma.key == pygame.K_SPACE:
@@ -48,22 +55,46 @@ def kontrolli(hahmot, tapahtuma, viholliset):
                 vihollinen[3] = True
         elif tapahtuma.key == pygame.K_RIGHT:
             if rajaTarkastus(paahahmo[1], paahahmo[2], "o"):
-                paahahmo[1] += 10
+                liikkuOikealle = True
+            else:
+                liikkuOikealle = True
         elif tapahtuma.key == pygame.K_LEFT:
             if rajaTarkastus(paahahmo[1], paahahmo[2], "v"):
-                paahahmo[1] -= 10
+                liikkuVasemalle = True
+            else:
+                liikkuVasemalle = False
         elif tapahtuma.key == pygame.K_DOWN:
             if rajaTarkastus(paahahmo[1], paahahmo[2], "a"):
-                paahahmo[2] += 10
+                liikkuAlhaalle = True
+            else:
+                liikkuAlhaalle = False
         elif tapahtuma.key == pygame.K_UP:
             if rajaTarkastus(paahahmo[1], paahahmo[2], "y"):
-                paahahmo[2] -= 10
-
+                liikkuYlhaalle = True
+            else:
+                liikkuYlhaalle = False
+    elif tapahtuma.type == pygame.KEYUP:
+        if tapahtuma.key == pygame.K_RIGHT:
+            liikkuOikealle = False
+        elif tapahtuma.key == pygame.K_LEFT:
+            liikkuVasemalle = False
+        elif tapahtuma.key == pygame.K_DOWN:
+            liikkuAlhaalle = False
+        elif tapahtuma.key == pygame.K_UP:
+            liikkuYlhaalle = False
+    if liikkuOikealle == True:
+        paahahmo[1] += 0.25
+    if liikkuVasemalle == True:
+        paahahmo[1] -= 0.25
+    if liikkuAlhaalle == True:
+        paahahmo[2] += 0.25
+    if liikkuYlhaalle == True:
+        paahahmo[2] -= 0.25
 
 def main():
     vihrea = ["vihrea.png", 100, 100, True]
-    punainen = ["punainen.png", random.randint(0,400), random.randint(0,400), False]
-    punainen2 = ["punainen.png", random.randint(0,400), random.randint(0,400), False]
+    punainen = ["punainen.png", 200, random.randint(0,400), True]
+    punainen2 = ["punainen.png",200, random.randint(0,400), True]
     hahmot = [vihrea]
     viholliset = [punainen, punainen2]
     while True:
