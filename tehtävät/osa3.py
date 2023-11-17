@@ -6,8 +6,12 @@ liikkuVasemalle = False
 liikkuYlhaalle = False
 liikkuAlhaalle = False
 
-naytto = pygame.display.set_mode((500, 500))
+naytto = pygame.display.set_mode((550, 500))
 pygame.display.set_caption("Piirtäminen")
+pygame.font.init()
+pygame.font.init() # you have to call this at the start, 
+                   # if you want to use this module.
+my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
 
 def piirraKuva(kuvatiedosto, x, y):
@@ -25,7 +29,7 @@ def piirtaminen(naytto, hahmot, viholliset):
     pygame.display.flip()
 
 def rajaTarkastus(x, y, suunta):
-    if (suunta == "v" and x < 10) or (suunta == "o" and x > 390) or (suunta == "y" and y < 10) or (suunta == "a" and y > 390):
+    if (suunta == "v" and x < 10) or (suunta == "o" and x > 440) or (suunta == "y" and y < 10) or (suunta == "a" and y > 400):
         return False
     else:
         return True
@@ -40,7 +44,7 @@ def vihollinenTarkastus(hahmot, viholliset):
 
 def vihollisenLiikkuminen(viholliset):
     for vihollinen in viholliset:
-        if vihollinen[1] >= 400:
+        if vihollinen[1] >= 450:
             vihollinen[1] = 0
             vihollinen[2] = random.randint(0,400)
         else:
@@ -83,13 +87,17 @@ def kontrolli(hahmot, tapahtuma, viholliset):
         elif tapahtuma.key == pygame.K_UP:
             liikkuYlhaalle = False
     if liikkuOikealle == True:
-        paahahmo[1] += 0.25
+        if rajaTarkastus(paahahmo[1], paahahmo[2], "o"):
+            paahahmo[1] += 0.28
     if liikkuVasemalle == True:
-        paahahmo[1] -= 0.25
+        if rajaTarkastus(paahahmo[1], paahahmo[2], "v"):
+            paahahmo[1] -= 0.28
     if liikkuAlhaalle == True:
-        paahahmo[2] += 0.25
+        if rajaTarkastus(paahahmo[1], paahahmo[2], "a"):
+            paahahmo[2] += 0.28
     if liikkuYlhaalle == True:
-        paahahmo[2] -= 0.25
+        if rajaTarkastus(paahahmo[1], paahahmo[2], "y"):
+            paahahmo[2] -= 0.28
 
 def main():
     vihrea = ["vihrea.png", 100, 100, True]
@@ -97,14 +105,18 @@ def main():
     punainen2 = ["punainen.png",200, random.randint(0,400), True]
     hahmot = [vihrea]
     viholliset = [punainen, punainen2]
+    i = 0
     while True:
+        i += .01
+        text_surface = my_font.render(str(int(i)), False, (255, 255, 255))
+        naytto.blit(text_surface, (0,0))
         tapahtuma = pygame.event.poll()
         if tapahtuma.type == pygame.QUIT:
             break
         kontrolli(hahmot, tapahtuma, viholliset)
         piirtaminen(naytto, hahmot, viholliset)
         if vihollinenTarkastus(hahmot, viholliset):
-            naytto.fill((100, 100, 100))
+            exit()
         else:
             naytto.fill((0, 0, 0))
         vihollisenLiikkuminen(viholliset)
