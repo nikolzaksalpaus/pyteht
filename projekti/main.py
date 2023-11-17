@@ -196,11 +196,11 @@ def register():
 
     c = conn.cursor()
 
-    c.execute("INSERT INTO users VALUES (:login, :password) WHERE NOT EXISTS (SELECT 1 FROM users WHERE login = ':login')",
+    c.execute("INSERT INTO users VALUES (:login, :password))",
         {
         'login': loginInput.get(),
         'password': passwordInput.get()
-        }) # Luo uuden käyttäjän jos sama käyttäjän nimi ei ole olemassa
+        }) # Luo uutta käyttäjää
 
     # Committa muutokset
     conn.commit()
