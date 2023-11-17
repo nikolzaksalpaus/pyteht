@@ -1,33 +1,42 @@
 from tkinter import *
 import sqlite3
 
-kirjautuaminen = Tk()
-kirjautuaminen.title("Tietokanta")
-kirjautuaminen.geometry("450x400")
+global kirjautuminen # Kirjautumisen ikunan muuttuja
 
-conn = sqlite3.connect("users.db")
+kirjautuminen = Tk()
+kirjautuminen.title("Tietokanta")
+kirjautuminen.geometry("450x400") # Ikkunan koko
 
-    c = conn.cursor()
+conn = sqlite3.connect("tasks.db") # Tietokantaan yhdistäminen
 
-    # Poista tietokantataulu nimeltä tasks, jos sellainen on jo olemassa
-    c.execute("DROP TABLE IF EXISTS tasks")
+c = conn.cursor()
 
-    # luo taulu
-    sql = '''CREATE TABLE tasks (
-        task VARCHAR (255)
-    )'''
+# Luo tehtävien taulu jos ei jo ole olemassa
+sql = '''CREATE TABLE IF NOT EXISTS tasks (
+    task VARCHAR (255),
+    userOid INT
+)'''
 
-    c.execute(sql)
+c.execute(sql)
 
-    # committa muutokset
-    conn.commit()
+# Luo käyttäjien taulu jos ei jo ole olemassa
+sql = '''CREATE TABLE IF NOT EXISTS users (
+    login VARCHAR (255),
+    password VARCHAR (255)
+)'''
 
-    # sulje tietokantayhteys
-    conn.close()
+c.execute(sql)
 
-def paneeli():
+# Committa muutokset
+conn.commit()
+
+# Sulje tietokantayhteys
+conn.close()
+
+def avaaPaneeli():
     # Kirjautumisen jälkeen avautuvan ikkunan näkymä
     # Paneelin ikkuna, kun käyttäjä kirjautui
+    global paneeli # Paneelin ikkuna
     paneeli = Tk()
     paneeli.title("Tietokanta")
     paneeli.geometry("400x400")
@@ -44,10 +53,6 @@ def paneeli():
     submit_btn = Button(paneeli, text="Lisää tehtävä tietokantaan", command=submit)
     submit_btn.grid (row=2, column=0, columnspan=2, pady=10, padx=10)
 
-    global query_btn
-    query_btn = Button(paneeli, text="Näytä tehtävät", command=query)
-    query_btn.grid (row=3, column=0, columnspan=2, pady=10, padx=10)
-
     global select_label
     select_label = Label(paneeli, text="Valitse ID")
     select_label.grid (row=4, column=0, pady=5)
@@ -63,19 +68,18 @@ def paneeli():
     edit_btn = Button (paneeli, text="Muokkaa tehtävää", command=edit)
     edit_btn.grid (row=6, column=0, columnspan=2, pady=10, padx=10)
 
+    query() # Päivittää tasklista ikkunassa
+
+    kirjautuminen.destroy() # Sulkea tasklista ikkunassa
+
     paneeli.mainloop()
 
-    global query_label
-    query_label = Label(paneeli)
-
 def query():
-    print("a1")
-
-    conn = sqlite3.connect("tasklist.db")
+    conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
 
-    c.execute("SELECT task, oid FROM tasks")
+    c.execute("SELECT task, oid FROM tasks WHERE userOid = " + str(kayttaja))
     records=c.fetchall()
 
     print_records = ''
@@ -88,6 +92,8 @@ def query():
     heading_label['text'] = "Tehtävä \t ID"
     heading_label.grid (row=7, column=0, columnspan=2)
 
+    query_label = Label(paneeli)
+
     query_label['text'] = print_records
     query_label.grid (row=8, column=0, columnspan=2)
 
@@ -95,17 +101,16 @@ def query():
     conn.close()
 
 def submit():
-    print("a2")
-
-    conn = sqlite3.connect("tasklist.db")
+    conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
 
     # Insert into table
 
-    c.execute("INSERT INTO tasks VALUES (:task)",
+    c.execute("INSERT INTO tasks VALUES (:task, :userOid)",
         {
-        'task': task.get()
+        'task': task.get(),
+        'userOid': kayttaja
         })
     
     # commit changes
@@ -116,9 +121,10 @@ def submit():
     
     task.delete(0, END)
 
-def delete():
+    query() # Päivittää tasklista ikkunassa
 
-    conn = sqlite3.connect("tasklist.db")
+def delete():
+    conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
 
@@ -132,16 +138,16 @@ def delete():
     # close connection
     conn.close()
 
+    query() # Päivittää tasklista ikkunassa
+
 def update():
-    print("a4")
-    conn = sqlite3.connect("tasklist.db")
+    conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
     record_id = delete_box.get()
 
     c.execute("""UPDATE tasks SET
         task = :task
-              
         WHERE oid = :oid""",
         {
             'task': task_editor.get(),
@@ -152,15 +158,15 @@ def update():
     conn.close()
     editor.destroy()
 
-def edit():
-    print("a5")
+    query() # Päivittää tasklista ikkunassa
 
+def edit():
     global editor
     editor = Tk()
     editor.title("Päivitä")
     editor.geometry("400x400")
 
-    conn = sqlite3.connect("tasklist.db")
+    conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
 
@@ -182,49 +188,71 @@ def edit():
     save_btn = Button(editor, text="Tallenna", command=update)
     save_btn.grid (row=2, column=0, columnspan=2, pady=10, padx=10)
 
+    query() # Päivittää tasklista ikkunassa
+
 def register():     
-    # luo tietokanta nimeltä tasklist
-    conn = sqlite3.connect("tasklist.db")
+    # Luo tietokanta nimeltä tasks
+    conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
 
-    # Poista tietokantataulu nimeltä tasks, jos sellainen on jo olemassa
-    c.execute("DROP TABLE IF EXISTS tasks")
+    c.execute("INSERT INTO users VALUES (:login, :password) WHERE NOT EXISTS (SELECT 1 FROM users WHERE login = ':login')",
+        {
+        'login': loginInput.get(),
+        'password': passwordInput.get()
+        }) # Luo uuden käyttäjän jos sama käyttäjän nimi ei ole olemassa
 
-    # luo taulu
-    sql = '''CREATE TABLE tasks (
-        task VARCHAR (255)
-    )'''
-
-    c.execute(sql)
-
-    # committa muutokset
+    # Committa muutokset
     conn.commit()
 
-    # sulje tietokantayhteys
+    # Sulje tietokantayhteys
     conn.close()
 
 def login():
-    print("asd")
+    # Luo tietokanta nimeltä tasks
+    conn = sqlite3.connect("tasks.db")
+
+    c = conn.cursor()
+
+    c.execute("SELECT login, password, oid FROM users WHERE login = '" + loginInput.get() + "'") # Etisä käyttäjää
+    records=c.fetchall()
+
+    if len(records) == 0:
+        return False
+
+    if records[0][1] != passwordInput.get():
+        return False
+    
+    global kayttaja
+
+    kayttaja = records[0][2]
 
 
-loginLogin = Entry(kirjautuaminen, width=30)
-loginLogin.grid(row=0, column=1, padx=20, pady=(10,0))
+    # Committa muutokset
+    conn.commit()
 
-loginPassword = Entry(kirjautuaminen, width=30)
-loginPassword.grid(row=1, column=1, padx=20, pady=(10,0))
+    # Sulje tietokantayhteys
+    conn.close()
 
-loginButton = Button(kirjautuaminen, text="Kirjaudu", command=submit)
+    avaaPaneeli() # Avaa paneelin
+
+task_label = Label(kirjautuminen, text="Login")
+task_label.grid (row=0, column=0, pady=(10,0))
+
+loginInput = Entry(kirjautuminen, width=30)
+loginInput.grid(row=0, column=1, padx=20, pady=(10,0))
+
+task_label = Label(kirjautuminen, text="Password")
+task_label.grid (row=1, column=0, pady=(10,0))
+
+passwordInput = Entry(kirjautuminen, width=30)
+passwordInput.grid(row=1, column=1, padx=20, pady=(10,0))
+
+loginButton = Button(kirjautuminen, text="Kirjaudu", command=login)
 loginButton.grid (row=2, column=1, columnspan=1, pady=10, padx=10)
 
-registerLogin = Entry(kirjautuaminen, width=30)
-registerLogin.grid(row=0, column=2, padx=20, pady=(10,0))
-
-registerPassword = Entry(kirjautuaminen, width=30)
-registerPassword.grid(row=1, column=2, padx=20, pady=(10,0))
-
-registerButton = Button(kirjautuaminen, text="Luo tili", command=register)
+registerButton = Button(kirjautuminen, text="Luo tili", command=register)
 registerButton.grid (row=2, column=2, columnspan=2, pady=10, padx=10)
 
-    
-kirjautuaminen.mainloop()
+
+kirjautuminen.mainloop()
