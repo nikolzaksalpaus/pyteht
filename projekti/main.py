@@ -196,7 +196,7 @@ def register():
 
     c = conn.cursor()
 
-    c.execute("INSERT INTO users VALUES (:login, :password))",
+    c.execute("INSERT INTO users VALUES (:login, :password)",
         {
         'login': loginInput.get(),
         'password': passwordInput.get()
