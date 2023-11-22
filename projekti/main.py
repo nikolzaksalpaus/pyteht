@@ -36,7 +36,7 @@ conn.close()
 def avaaPaneeli():
     # Kirjautumisen jälkeen avautuvan ikkunan näkymä
     # Paneelin ikkuna, kun käyttäjä kirjautui
-    global paneeli # Paneelin ikkuna
+    global paneeli, query_label # Paneelin ikkuna
     paneeli = Tk()
     paneeli.title("Tietokanta")
     paneeli.geometry("400x400")
@@ -75,6 +75,7 @@ def avaaPaneeli():
     paneeli.mainloop()
 
 def query():
+    global query_label
     conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
@@ -83,24 +84,18 @@ def query():
     records=c.fetchall()
 
     print_records = ''
+    if len(records) != 0:
+        for record in records:
+            print_records += str(record [0]) + "\t" + str(record [1]) + "\n"
 
-    for record in records:
-        print_records += str(record [0]) + "\t" + str(record [1]) + "\n"
-    
-    heading_label = Label(paneeli, text="Helvetica", font=("Helvetica", 16))
-
-    heading_label['text'] = "Tehtävä \t ID"
-    heading_label.grid (row=7, column=0, columnspan=2)
-
-    query_label = Label(paneeli)
-
-    query_label['text'] = print_records
+    query_label = Label(paneeli, text=print_records)
     query_label.grid (row=8, column=0, columnspan=2)
 
     conn.commit()
     conn.close()
 
 def submit():
+    global query_label
     conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
@@ -121,12 +116,27 @@ def submit():
     
     task.delete(0, END)
 
+    query_label.destroy() # Poista teksti labelista
     query() # Päivittää tasklista ikkunassa
 
 def delete():
+    global query_label
     conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
+
+    record_id = delete_box.get()
+
+    if record_id == '':
+        print('Incorrect record_id')
+        return False
+
+    c.execute("SELECT task, oid FROM tasks WHERE oid = " + record_id + " AND userOid = " + str(kayttaja))
+    records=c.fetchall()
+
+    if len(records) == 0:
+        print('No such task found')
+        return False
 
     c.execute("DELETE FROM tasks WHERE oid=" + delete_box.get())
 
@@ -138,13 +148,26 @@ def delete():
     # close connection
     conn.close()
 
+    query_label.destroy() # Poista teksti labelista
     query() # Päivittää tasklista ikkunassa
 
 def update():
+    global query_label
     conn = sqlite3.connect("tasks.db")
 
     c = conn.cursor()
     record_id = delete_box.get()
+
+    if record_id == '':
+        print('Incorrect record_id')
+        return False
+
+    c.execute("SELECT task, oid FROM tasks WHERE oid = " + record_id + " AND userOid = " + str(kayttaja))
+    records=c.fetchall()
+
+    if len(records) == 0:
+        print('No such task found')
+        return False
 
     c.execute("""UPDATE tasks SET
         task = :task
@@ -158,10 +181,12 @@ def update():
     conn.close()
     editor.destroy()
 
+    query_label.destroy() # Poista teksti labelista
     query() # Päivittää tasklista ikkunassa
 
 def edit():
-    global editor
+    global query_label, editor
+
     editor = Tk()
     editor.title("Päivitä")
     editor.geometry("400x400")
@@ -171,6 +196,18 @@ def edit():
     c = conn.cursor()
 
     record_id = delete_box.get()
+
+    if record_id == '':
+        print('Incorrect record_id')
+        return False
+
+    c.execute("SELECT task, oid FROM tasks WHERE oid = " + record_id + " AND userOid = " + str(kayttaja))
+    records=c.fetchall()
+
+    if len(records) == 0:
+        print('No such task found')
+        return False
+    
     c.execute("SELECT * FROM tasks WHERE oid = ?", (record_id,))
     records=c.fetchall()
 
@@ -188,6 +225,7 @@ def edit():
     save_btn = Button(editor, text="Tallenna", command=update)
     save_btn.grid (row=2, column=0, columnspan=2, pady=10, padx=10)
 
+    query_label.destroy() # Poista teksti labelista
     query() # Päivittää tasklista ikkunassa
 
 def register():     
@@ -196,7 +234,14 @@ def register():
 
     c = conn.cursor()
 
-    c.execute("INSERT INTO users VALUES (:login, :password) WHERE NOT EXISTS (SELECT 1 FROM users WHERE login = ':login')",
+    c.execute("SELECT login FROM users WHERE login = '" + loginInput.get() + "'") # Etisä käyttäjää
+    records=c.fetchall()
+
+    if len(records) != 0:
+        print("Käyttäjä on jo tietokannassa")
+        return False
+
+    c.execute("INSERT INTO users VALUES (:login, :password)",
         {
         'login': loginInput.get(),
         'password': passwordInput.get()
@@ -218,9 +263,11 @@ def login():
     records=c.fetchall()
 
     if len(records) == 0:
+        print("Tietokannassa ei ole tätä käyttäjää")
         return False
 
     if records[0][1] != passwordInput.get():
+        print("Salasana on väärin")
         return False
     
     global kayttaja
@@ -245,7 +292,7 @@ loginInput.grid(row=0, column=1, padx=20, pady=(10,0))
 task_label = Label(kirjautuminen, text="Password")
 task_label.grid (row=1, column=0, pady=(10,0))
 
-passwordInput = Entry(kirjautuminen, width=30)
+passwordInput = Entry(kirjautuminen, show="*", width=30)
 passwordInput.grid(row=1, column=1, padx=20, pady=(10,0))
 
 loginButton = Button(kirjautuminen, text="Kirjaudu", command=login)
