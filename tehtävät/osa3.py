@@ -6,11 +6,12 @@ liikkuVasemalle = False
 liikkuYlhaalle = False
 liikkuAlhaalle = False
 
+clock = pygame.time.Clock()
+
 naytto = pygame.display.set_mode((550, 500))
 pygame.display.set_caption("Piirtäminen")
-pygame.font.init()
-pygame.font.init()
 
+pygame.font.init()
 my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
 
@@ -18,6 +19,7 @@ def piirraKuva(kuvatiedosto, x, y):
     naytto.blit(kuvatiedosto, (x, y))
 
 def piirtaminen(naytto, hahmot, viholliset):
+    clock.tick(60)
     for hahmo in hahmot:
         if hahmo[3] == True:
             kuva = pygame.image.load(hahmo[0]).convert()
@@ -48,7 +50,7 @@ def vihollisenLiikkuminen(viholliset):
             vihollinen[1] = 0
             vihollinen[2] = random.randint(0,400)
         else:
-            vihollinen[1] += 0.2  
+            vihollinen[1] += 4.8
 
 def kontrolli(hahmot, tapahtuma, viholliset):
     global liikkuOikealle,liikkuVasemalle,liikkuAlhaalle,liikkuYlhaalle
@@ -88,16 +90,16 @@ def kontrolli(hahmot, tapahtuma, viholliset):
             liikkuYlhaalle = False
     if liikkuOikealle == True:
         if rajaTarkastus(paahahmo[1], paahahmo[2], "o"):
-            paahahmo[1] += 0.28
+            paahahmo[1] += 6
     if liikkuVasemalle == True:
         if rajaTarkastus(paahahmo[1], paahahmo[2], "v"):
-            paahahmo[1] -= 0.28
+            paahahmo[1] -= 6
     if liikkuAlhaalle == True:
         if rajaTarkastus(paahahmo[1], paahahmo[2], "a"):
-            paahahmo[2] += 0.28
+            paahahmo[2] += 6
     if liikkuYlhaalle == True:
         if rajaTarkastus(paahahmo[1], paahahmo[2], "y"):
-            paahahmo[2] -= 0.28
+            paahahmo[2] -= 6
 
 def main():
     vihrea = ["vihrea.png", 100, 100, True]
@@ -107,8 +109,8 @@ def main():
     viholliset = [punainen, punainen2]
     i = 0
     while True:
-        i += .01 * abs(hahmot[0][1] - 500) / 100
-        text_surface = my_font.render(str(int(i)), False, (255, 255, 255))
+        i += .01 * abs(hahmot[0][1] - 500) / 10
+        text_surface = my_font.render(str(int(i)), True, (255, 255, 255))
         naytto.blit(text_surface, (0,0))
         tapahtuma = pygame.event.poll()
         if tapahtuma.type == pygame.QUIT:
