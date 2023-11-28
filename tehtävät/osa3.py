@@ -9,8 +9,8 @@ liikkuAlhaalle = False
 naytto = pygame.display.set_mode((550, 500))
 pygame.display.set_caption("Piirtäminen")
 pygame.font.init()
-pygame.font.init() # you have to call this at the start, 
-                   # if you want to use this module.
+pygame.font.init()
+
 my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
 
@@ -107,7 +107,7 @@ def main():
     viholliset = [punainen, punainen2]
     i = 0
     while True:
-        i += .01
+        i += .01 * abs(hahmot[0][1] - 500) / 100
         text_surface = my_font.render(str(int(i)), False, (255, 255, 255))
         naytto.blit(text_surface, (0,0))
         tapahtuma = pygame.event.poll()
